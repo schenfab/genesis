@@ -44,14 +44,42 @@ def test_check_runs_aconfmgr_check(tmp_path):
     assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {REPO}/aconfmgr check\n"
 
 
+def make_config(tmp_path, body):
+    cfg = tmp_path / "cfg"
+    cfg.mkdir()
+    (cfg / "10-base.sh").write_text(body)
+    return cfg
+
+
 def test_apply_runs_aconfmgr_then_users_step(tmp_path):
     users = tmp_path / "users"
     users.write_text("genesis-no-such-user wheel\n")
-    env, fake = make_env(tmp_path, GENESIS_USERS_FILE=str(users))
+    cfg = make_config(tmp_path, "AddPackage base\n")
+    env, fake = make_env(tmp_path, GENESIS_USERS_FILE=str(users), GENESIS_CONFIG_DIR=str(cfg))
     result = run(["apply"], env)
     assert result.returncode == 0, result.stderr
-    assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {REPO}/aconfmgr apply\n"
+    assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {cfg} apply\n"
     assert "genesis-no-such-user" in result.stderr  # users step ran and skipped unknown user
+
+
+def test_apply_accepts_package_in_host_file(tmp_path):
+    cfg = make_config(tmp_path, "# nothing\n")
+    (cfg / "hosts").mkdir()
+    (cfg / "hosts" / "box.sh").write_text("  AddPackage grub\n")
+    users = tmp_path / "users"
+    users.write_text("")
+    env, _ = make_env(tmp_path, GENESIS_USERS_FILE=str(users), GENESIS_CONFIG_DIR=str(cfg))
+    assert run(["apply"], env).returncode == 0
+
+
+def test_apply_refuses_empty_config(tmp_path):
+    cfg = make_config(tmp_path, "# AddPackage in a comment does not count\nIgnorePath '/x'\n")
+    env, _ = make_env(tmp_path, GENESIS_CONFIG_DIR=str(cfg))
+    result = run(["apply"], env)
+    assert result.returncode == 1
+    assert "refusing to apply" in result.stderr
+    assert "genesis save" in result.stderr
+    assert not (tmp_path / "log").exists()  # aconfmgr was never called
 
 
 def test_install_refuses_outside_live_iso(tmp_path):

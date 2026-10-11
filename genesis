@@ -4,7 +4,7 @@ set -euo pipefail
 
 GENESIS_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 ACONFMGR_DIR="${GENESIS_ACONFMGR_DIR:-$GENESIS_ROOT/vendor/aconfmgr}"
-CONFIG_DIR="$GENESIS_ROOT/aconfmgr"
+CONFIG_DIR="${GENESIS_CONFIG_DIR:-$GENESIS_ROOT/aconfmgr}"
 USERS_FILE="${GENESIS_USERS_FILE:-$GENESIS_ROOT/hosts/common/users}"
 ISO_MARKER="${GENESIS_ISO_MARKER:-/run/archiso}"
 
@@ -12,7 +12,7 @@ usage() {
 	cat >&2 <<'EOF'
 Usage: genesis <command>
   install [host]  (live ISO only) install this machine with archinstall
-  apply           make this machine match the repo (asks before every change)
+  apply           make this machine match the repo (asks before changes; use --paranoid first)
   save            record this machine's drift into aconfmgr/99-unsorted.sh
   check           lint the aconfmgr config
 EOF
@@ -27,6 +27,13 @@ run_aconfmgr() {
 	fi
 	# aconfmgr only works from inside its own checkout.
 	(cd "$ACONFMGR_DIR" && ./aconfmgr -c "$CONFIG_DIR" "$@")
+}
+
+# aconfmgr apply with no AddPackage lines would unpin every package.
+require_packages_configured() {
+	if ! grep -qs '^[[:space:]]*AddPackage' "$CONFIG_DIR"/*.sh "$CONFIG_DIR"/hosts/*.sh; then
+		die "refusing to apply: the aconfmgr config lists no packages yet. Run 'genesis save' and sort aconfmgr/99-unsorted.sh first (see README)."
+	fi
 }
 
 enable_secret_guard() {
@@ -46,6 +53,7 @@ case "$command" in
 		;;
 	apply)
 		enable_secret_guard
+		require_packages_configured
 		run_aconfmgr apply "$@"
 		"$GENESIS_ROOT/install/users.sh" "$USERS_FILE"
 		;;

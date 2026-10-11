@@ -36,19 +36,25 @@ install; private config is restored by hand (`docs/post-install.md`).
    - Review, then **Install**. Reboot when done.
 7. Log in as `fschenkel` and run:
    ```
-   ~/repos/genesis/genesis apply
+   ~/repos/genesis/genesis apply --paranoid
    ```
-   It shows every change (packages to install/remove, files, services) and asks
-   before acting. AUR packages are built locally and take a while.
+   It shows the planned changes (packages to install/remove, files, services)
+   and asks once per category of change. `--paranoid` asks per item; use it for the
+   first apply. AUR packages are built locally and take a while.
 8. Work through `docs/post-install.md`.
 
 ## Day to day
 
 | Command | What it does |
 |---|---|
-| `genesis apply` | Make this machine match the repo. Asks before each change, **including removing packages that are not in the repo.** |
+| `genesis apply` | Make this machine match the repo. aconfmgr asks once per category of change, so one "yes" can remove many packages that are not in the repo. Use `genesis apply --paranoid` (asks per item) for the first apply on any machine. |
 | `genesis save` | Record this machine's drift (new packages, changed `/etc` files, enabled services) into `aconfmgr/99-unsorted.sh` + `aconfmgr/files/`. |
 | `genesis check` | Lint the aconfmgr config. |
+
+On an existing machine, go in this order: `genesis save` -> sort
+`aconfmgr/99-unsorted.sh` into the common or host files -> `genesis save` again
+reports "configuration unchanged" -> only then `genesis apply --paranoid`.
+`genesis apply` refuses to run while the config lists no packages.
 
 After `genesis save`: move each line of `aconfmgr/99-unsorted.sh` into the right
 file, delete `99-unsorted.sh`, review `git diff`, commit.
@@ -73,14 +79,14 @@ on it, `genesis save` and put its specifics into `aconfmgr/hosts/<host>.sh`.
 - `aconfmgr/00-ignore.sh`: paths aconfmgr never captures or deletes (keys,
   credentials, accounts, machine state).
 - `hooks/pre-commit`: refuses commits containing private paths or secret-looking
-  content. Enabled automatically by any `genesis` command (`core.hooksPath=hooks`);
+  content. Enabled by `genesis apply/save/check` (`core.hooksPath=hooks`; `install` does not);
   CI also runs it on every push.
 
 ## Testing
 
 ```
 pytest -q                                   # unit tests
-shellcheck genesis hooks/pre-commit install/*.sh aconfmgr/*.sh aconfmgr/hosts/*.sh
+shellcheck genesis hooks/pre-commit install/*.sh aconfmgr/*.sh aconfmgr/hosts/*.sh tests/vm/run.sh
 ```
 
 Full VM test (needs `sudo pacman -S qemu-desktop edk2-ovmf` and an Arch ISO;
