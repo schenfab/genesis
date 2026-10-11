@@ -1,0 +1,15 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - run: pacman -Syu --noconfirm --needed git python python-pytest shellcheck
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: hooks/pre-commit --all
+      - run: shellcheck genesis hooks/pre-commit install/*.sh aconfmgr/*.sh aconfmgr/hosts/*.sh
+      - run: pytest -q
