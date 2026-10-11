@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 from conftest import REPO, write_exe
 
@@ -47,6 +48,24 @@ def test_check_runs_aconfmgr_check(tmp_path):
     env, fake = make_env(tmp_path)
     assert run(["check"], env).returncode == 0
     assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {REPO}/aconfmgr check\n"
+
+
+def test_concurrent_run_is_refused(tmp_path):
+    """aconfmgr compiles into a shared ./tmp in its checkout; two runs must not overlap."""
+    env, fake = make_env(tmp_path)
+    holder = subprocess.Popen(["flock", str(fake / ".genesis.lock"), "sleep", "5"])
+    try:
+        for _ in range(50):  # wait until the holder owns the lock
+            if subprocess.run(["flock", "-n", str(fake / ".genesis.lock"), "true"]).returncode != 0:
+                break
+            time.sleep(0.05)
+        result = run(["save"], env)
+    finally:
+        holder.kill()
+        holder.wait()
+    assert result.returncode == 1
+    assert "another genesis run" in result.stderr
+    assert not (tmp_path / "log").exists()
 
 
 def make_config(tmp_path, body):

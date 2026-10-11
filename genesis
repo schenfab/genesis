@@ -26,7 +26,10 @@ run_aconfmgr() {
 	if [[ ! -x "$ACONFMGR_DIR/aconfmgr" ]]; then
 		git -C "$GENESIS_ROOT" submodule update --init vendor/aconfmgr
 	fi
-	# aconfmgr only works from inside its own checkout.
+	# aconfmgr only works from inside its own checkout, and compiles into a shared
+	# ./tmp there, so two runs must never overlap.
+	exec 9>"$ACONFMGR_DIR/.genesis.lock"
+	flock -n 9 || die "another genesis run is in progress (it shares aconfmgr's work directory)"
 	(cd "$ACONFMGR_DIR" && ./aconfmgr -c "$CONFIG_DIR" "$@")
 }
 
