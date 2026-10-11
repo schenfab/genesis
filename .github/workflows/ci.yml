@@ -11,5 +11,5 @@ jobs:
           submodules: true
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: hooks/pre-commit --all
-      - run: shellcheck genesis hooks/pre-commit install/*.sh aconfmgr/*.sh aconfmgr/hosts/*.sh
+      - run: shellcheck genesis hooks/pre-commit install/*.sh aconfmgr/*.sh aconfmgr/hosts/*.sh tests/vm/run.sh
       - run: pytest -q

@@ -1368,6 +1368,9 @@ No new code; fills `aconfmgr/` with moog's real state. Each `genesis` command he
 **Sorting rules:**
 - Common (`10-base`/`20-desktop`/`30-dev`): anything I want on every machine.
 - `hosts/moog.sh`: hardware- or legacy-specific: `grub`, `dhcpcd`, `ntpdate` (+ its `hwclock.conf` drop-in), `g15daemon*`, `hplip-plugin`, the `/swap` swapfile, `amdgpu` options, `/etc/default/grub`, `latarcyrheb-sun32` console font, moog's `dhcpcd`/`resolv.conf` and anything tied to moog's devices (udev rules for specific hardware).
+- Common: the NetworkManager package and its enable symlinks (new hosts use NM; moog's dhcpcd stays in `moog.sh`).
+- Keep everything in the flat `aconfmgr/files/<real path>` layout; use `files/hosts/<host>/...` + `CopyFileTo` only when a path differs between hosts.
+- The first apply on moog uses `genesis apply --paranoid`.
 - Delete instead of keeping: `*.O`, `resolv.conf.bak`, `fstab~`, stale `.pacnew`/`.pacsave`.
 - Private → add to `00-ignore.sh` (and `hooks/pre-commit` + its test if it's a new class of secret) and `docs/post-install.md`.
 
@@ -1402,7 +1405,7 @@ Expected: all pass.
 - [ ] **Step 5: User verifies moog is in sync**
 
 User: `~/repos/genesis/genesis save`, expected: no `99-unsorted.sh` created (`Done (configuration unchanged)`).
-User: `~/repos/genesis/genesis apply`, expected: `Done (system state unchanged)` (only the new `amdgpu.conf` may be installed on the first run; answer yes, then re-run to see unchanged).
+User: `~/repos/genesis/genesis apply --paranoid`, expected: `Done (system state unchanged)` (only the new `amdgpu.conf` may be installed on the first run; answer yes, then re-run to see unchanged).
 
 - [ ] **Step 6: Commit and push**
 

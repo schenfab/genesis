@@ -30,7 +30,7 @@ workdir="$(mktemp -d)" # /tmp on the live ISO is RAM-backed
 trap 'rm -rf "$workdir"' EXIT
 
 python "$ARCHCONF" config "$HOSTS_DIR" "$host" "$repo_url" "$repo_ref" > "$workdir/config.json"
-echo "Set passwords (stored only as hashes in RAM, handed to archinstall, then deleted):"
+echo "Set passwords (hashed, kept only in RAM (/tmp), handed to archinstall; genesis deletes its copy afterwards):"
 python "$ARCHCONF" creds "$HOSTS_DIR/common/users" "$workdir/creds.json"
 
 cat <<EOF

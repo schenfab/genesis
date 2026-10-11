@@ -13,7 +13,7 @@ while read -r -a fields || [[ ${#fields[@]} -gt 0 ]]; do
 	fi
 	for group in "${fields[@]:1}"; do
 		getent group "$group" >/dev/null || sudo groupadd --system "$group"
-		if ! id -nG "$user" | tr ' ' '\n' | grep -qx -- "$group"; then
+		if ! id -nG "$user" | tr ' ' '\n' | grep -Fqx -- "$group"; then
 			sudo usermod -aG "$group" "$user"
 		fi
 	done
