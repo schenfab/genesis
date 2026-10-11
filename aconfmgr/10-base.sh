@@ -98,7 +98,7 @@ CopyFile /etc/pacman.d/mirrorlist
 CopyFile /etc/papersize
 CopyFile /etc/shells
 CopyFile /etc/ssh/sshd_config
-CopyFile /etc/sudoers 440
+CopyFile /etc/sudoers
 CreateLink /etc/systemd/system/autovt@.service /usr/lib/systemd/system/getty@.service
 CreateLink /etc/systemd/system/getty.target.wants/getty@tty1.service /usr/lib/systemd/system/getty@.service
 CreateLink /etc/systemd/system/multi-user.target.wants/etckeeper.timer /usr/lib/systemd/system/etckeeper.timer
