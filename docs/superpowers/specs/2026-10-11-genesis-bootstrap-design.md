@@ -42,14 +42,16 @@ repo and every machine in sync over time.
 
 ```
 genesis/
-├── genesis                  # entry point: genesis install|apply|save
+├── genesis                  # entry point: genesis install|apply|save|check
 ├── README.md                # full workflow incl. step-by-step live ISO instructions
 ├── install/
-│   └── bootstrap.sh         # live ISO: pick host, merge config, prompt passwords, run archinstall
+│   ├── bootstrap.sh         # live ISO: pick host, build config, prompt passwords, run archinstall
+│   ├── archconf.py          # merges archinstall JSON, builds creds (yescrypt hashes, RAM only)
+│   └── users.sh             # stage-2 users step (supplementary groups)
 ├── hosts/
 │   ├── common/
 │   │   ├── archinstall.json # shared stage-1 choices
-│   │   └── users.sh         # users and their supplementary groups
+│   │   └── users            # data: `<user> <groups...>`; `wheel` = admin/sudo
 │   └── <host>/
 │       └── archinstall.json # hostname + host-specific stage-1 overrides
 ├── aconfmgr/                # aconfmgr config dir
@@ -62,7 +64,9 @@ genesis/
 │   ├── 99-unsorted.sh       # output of `genesis save`, to be sorted
 │   └── files/               # stored /etc files (host-specific under files/hosts/<host>/)
 ├── vendor/aconfmgr/         # git submodule, pinned commit
-├── hooks/pre-commit         # secret guard
+├── hooks/pre-commit         # secret guard (also run in CI with --all)
+├── tests/                   # pytest suite (+ tests/vm/run.sh for the VM test)
+├── .github/workflows/ci.yml # pytest, shellcheck, secret guard on every push
 └── docs/
     └── post-install.md      # manual checklist for private items
 ```
@@ -76,18 +80,23 @@ Run from the live ISO after `pacman -Sy git` and cloning the repo.
    (Python, available on the ISO) into a temp config.
    - Pinned: locale `en_US.UTF-8` (+ `de_CH.UTF-8` generated), console keymap
      `de_CH-latin1`, timezone `Europe/Zurich`, hostname, kernel `linux`, GNOME
-     profile, PipeWire, btrfs default layout with subvolumes, extra package `git`.
-   - Not pinned: target disk, bootloader, swap/zram, network backend.
+     profile (gdm), PipeWire, NetworkManager (an unset network config would
+     leave the system offline), extra package `git`.
+   - Not pinned: target disk, bootloader, swap/zram.
+   - Disk policy: archinstall cannot pin "default layout + btrfs" without also
+     pinning device and sizes, so the user selects default layout → btrfs →
+     default subvolumes → compression in the menu; README and bootstrap
+     on-screen instructions spell this out.
 3. Prompt for passwords: root, `fschenkel`, `guest`, `andrea`. Write a creds
-   file to RAM-backed `/tmp` on the ISO, pass via `--creds`, delete afterwards.
-   `fschenkel` is created as superuser (wheel/sudo).
+   file (yescrypt hashes via libcrypt, mode 0600) to RAM-backed `/tmp` on the
+   ISO, pass via `--creds`, delete afterwards. Users come from
+   `hosts/common/users`; users listed with `wheel` get `sudo: true`.
 4. Launch archinstall's interactive menu prefilled with the merged config; the
    user picks the disk, reviews defaults, installs.
 5. `custom_commands` clone the repo (with submodule) to
    `/home/fschenkel/repos/genesis`, owned by `fschenkel`.
 
-Supplementary groups and kernel parameters are deferred to stage 2 (groups
-don't exist yet; kernel-param placement depends on the chosen bootloader).
+Supplementary groups are deferred to stage 2 (groups don't exist yet).
 
 ## Stage 2 — apply (`genesis apply`)
 
@@ -96,11 +105,15 @@ Run by the user in their own terminal (aconfmgr uses sudo interactively).
 1. `aconfmgr apply` on `aconfmgr/` (common + current host). Shows planned
    changes — package installs **and removals**, file changes, unit links — and
    asks before acting.
-2. Users step: apply supplementary groups from `hosts/common/users.sh`
-   (`fschenkel`: docker, scanner, uucp, uinputg) via `usermod -aG`. Never
-   touches passwords.
-3. Host step: settings aconfmgr can't express as plain files, e.g. kernel
-   parameters (`amdgpu.runpm=0` on moog), written for the detected bootloader.
+2. Users step: apply supplementary groups from `hosts/common/users`
+   (`fschenkel`: wheel, docker, scanner, uucp, uinputg) via `usermod -aG`,
+   creating missing groups as system groups. Never touches passwords.
+
+Kernel/driver parameters are expressed as modprobe options in
+`/etc/modprobe.d/` (e.g. `options amdgpu runpm=0` on moog), so they are plain
+files managed by aconfmgr and independent of the bootloader. No separate host step.
+
+`genesis check` runs `aconfmgr check` (config lint).
 
 ## Sync — capture (`genesis save`)
 
