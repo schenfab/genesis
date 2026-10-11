@@ -93,7 +93,7 @@ def test_build_creds_structure():
     creds = archconf.build_creds([("fschenkel", ["wheel"]), ("guest", [])], lambda p: next(answers))
     assert archconf._crypt("r", creds["root_enc_password"]) == creds["root_enc_password"]
     assert [(u["username"], u["sudo"], u["groups"]) for u in creds["users"]] == [
-        ("fschenkel", True, []), ("guest", False, [])]
+        ("fschenkel", True, ["wheel"]), ("guest", False, [])]
     assert archconf._crypt("g", creds["users"][1]["enc_password"]) == creds["users"][1]["enc_password"]
 
 

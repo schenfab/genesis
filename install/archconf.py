@@ -89,7 +89,8 @@ def build_creds(users, read):
         "root_enc_password": hash_password(ask_password("root", read)),
         "users": [
             {"username": name, "enc_password": hash_password(ask_password(name, read)),
-             "sudo": "wheel" in groups, "groups": []}
+             "sudo": "wheel" in groups,
+             "groups": ["wheel"] if "wheel" in groups else []}
             for name, groups in users
         ],
     }

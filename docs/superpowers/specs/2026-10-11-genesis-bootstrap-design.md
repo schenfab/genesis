@@ -90,7 +90,8 @@ Run from the live ISO after `pacman -Sy git` and cloning the repo.
 3. Prompt for passwords: root, `fschenkel`, `guest`, `andrea`. Write a creds
    file (yescrypt hashes via libcrypt, mode 0600) to RAM-backed `/tmp` on the
    ISO, pass via `--creds`, delete afterwards. Users come from
-   `hosts/common/users`; users listed with `wheel` get `sudo: true`.
+   `hosts/common/users`; users listed with `wheel` get `sudo: true` and `groups: ["wheel"]`
+   at install.
 4. Launch archinstall's interactive menu prefilled with the merged config; the
    user picks the disk, reviews defaults, installs.
 5. `custom_commands` clone the repo (with submodule) to
@@ -108,6 +109,10 @@ Run by the user in their own terminal (aconfmgr uses sudo interactively).
 2. Users step: apply supplementary groups from `hosts/common/users`
    (`fschenkel`: wheel, docker, scanner, uucp, uinputg) via `usermod -aG`,
    creating missing groups as system groups. Never touches passwords.
+
+Sudo keeps working through the first apply: archinstall's per-user
+`/etc/sudoers.d` file is unowned and gets removed by aconfmgr, so sudo comes
+from the `%wheel` drop-in `/etc/sudoers.d/10-wheel` managed in `10-base.sh`.
 
 Kernel/driver parameters are expressed as modprobe options in
 `/etc/modprobe.d/` (e.g. `options amdgpu runpm=0` on moog), so they are plain
