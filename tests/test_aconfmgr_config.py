@@ -34,5 +34,6 @@ def test_every_guarded_path_is_ignored():
     for path in ["/etc/shadow", "/etc/gshadow", "/etc/ssh/ssh_host_", "/etc/docker/key.json",
                  "/etc/docker/certs.d", "/etc/openvpn/client", "/etc/NetworkManager/system-connections",
                  "/etc/ca-certificates/trust-source", "/etc/cups/ppd", "/etc/credstore",
-                 "/etc/cryptsetup-keys.d"]:
+                 "/etc/cryptsetup-keys.d", "/etc/ppp/*secrets", "/etc/davfs2/secrets",
+                 "/etc/msmtprc", "/etc/samba/credentials", "/etc/cifs-credentials"]:
         assert f"'{path}" in ignore, path

@@ -11,6 +11,10 @@ IgnorePath '/etc/ca-certificates/trust-source/*'
 IgnorePath '/etc/credstore*' '/etc/cryptsetup-keys.d'
 IgnorePath '/etc/cups/ppd/*' '/etc/cups/printers.conf*' '/etc/cups/classes.conf*' '/etc/cups/subscriptions.conf*' '/etc/printcap'
 IgnorePath '/etc/systemd/system/*OneDrive*.mount'
+IgnorePath '/etc/ppp/*secrets' '/etc/davfs2/secrets' '/etc/msmtprc' '/etc/samba/credentials*' '/etc/cifs-credentials*'
+
+# Third-party/proprietary trees; track specific files explicitly if ever wanted.
+IgnorePath '/opt/*' '/srv/*' '/usr/local/*'
 
 # Accounts: created by archinstall, groups by the genesis users step.
 IgnorePath '/etc/passwd*' '/etc/shadow*' '/etc/group*' '/etc/gshadow*' '/etc/subuid*' '/etc/subgid*' '/etc/.pwd.lock'
