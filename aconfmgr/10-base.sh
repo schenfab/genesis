@@ -119,3 +119,6 @@ CreateLink /etc/systemd/system/network-online.target.wants/NetworkManager-wait-o
 # Tools genesis itself needs (aconfmgr installs pacutils only as a dependency, which apply would prune).
 AddPackage git
 AddPackage pacutils
+
+# sshd has X11Forwarding enabled, which needs xauth.
+AddPackage xorg-xauth
