@@ -10,9 +10,12 @@ forbidden_paths=(
 	'*/etc/openvpn/client/*' '*/etc/NetworkManager/system-connections/*'
 	'*/etc/ca-certificates/trust-source/*' '*/etc/cups/ppd/*'
 	'*/etc/credstore*' '*/etc/cryptsetup-keys.d/*'
+	'*/etc/ppp/*secrets' '*/etc/davfs2/secrets' '*/etc/msmtprc'
+	'*/etc/samba/credentials*' '*/etc/cifs-credentials*'
 )
 # Written so that this file does not match itself.
-secret_regex='-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----|BEGIN OpenVPN Static[ ]key|<(key|tls-auth|tls-crypt|secret)>|\$(y|gy|7|6|5|2[aby])\$[./A-Za-z0-9$]{16,}|^[[:space:]]*psk[[:space:]]*='
+# shellcheck disable=SC2016  # literal $ in regex
+secret_regex='-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----|BEGIN OpenVPN Static[ ]key|<(key|tls-auth|tls-crypt|secret)>|\$(y|gy|7|6|5|2[aby])\$[./A-Za-z0-9$]{16,}|^[[:space:]]*psk[[:space:]]*=|pass[w]ord[[:space:]]*='
 
 if [[ "${1:-}" == --all ]]; then
 	# Skip gitlinks (submodules, mode 160000).
@@ -34,7 +37,12 @@ for f in "${files[@]}"; do
 		fi
 	done
 	# No -q: grep must consume all input, or the writer gets SIGPIPE and pipefail hides the match.
-	if content "$f" | grep -aE -- "$secret_regex" >/dev/null; then
+	if ! out=$(content "$f"); then
+		echo "secret guard: cannot read $f" >&2
+		failed=1
+		continue
+	fi
+	if grep -aE -- "$secret_regex" <<<"$out" >/dev/null; then
 		echo "secret guard: secret-looking content in: $f" >&2
 		failed=1
 	fi

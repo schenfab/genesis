@@ -10,6 +10,9 @@ PRIVATE_KEY = "-----BEGIN " + "OPENSSH PRIVATE KEY-----\nabc\n"
 OVPN_TAG = "<" + "key>\nabc\n</key>\n"
 SHADOW_LINE = "root:" + "$" + "y$j9T$abcdefghijklmnopqrstuv:19000::\n"
 PSK_LINE = "psk" + "=hunter2\n"
+PASSWORD_LINE = "pass" + "word = hunter2\n"
+OVPN_STATIC = "-----BEGIN " + "OpenVPN Static key V1-----\nabc\n"
+TLS_AUTH = "<" + "tls-auth>\nabc\n"
 
 
 def git(repo, *args):
@@ -51,6 +54,17 @@ def test_clean_file_passes(repo):
     "aconfmgr/files/etc/NetworkManager/system-connections/home.nmconnection",
     "aconfmgr/files/etc/ca-certificates/trust-source/work.p11-kit",
     "aconfmgr/files/etc/cups/ppd/printer.ppd",
+    "aconfmgr/files/etc/credstore/token",
+    "aconfmgr/files/etc/credstore.encrypted/token",
+    "aconfmgr/files/etc/cryptsetup-keys.d/root.key",
+    "aconfmgr/files/etc/ppp/chap-secrets",
+    "aconfmgr/files/etc/ppp/pap-secrets",
+    "aconfmgr/files/etc/davfs2/secrets",
+    "aconfmgr/files/etc/msmtprc",
+    "aconfmgr/files/etc/samba/credentials",
+    "aconfmgr/files/etc/samba/credentials.work",
+    "aconfmgr/files/etc/cifs-credentials",
+    "aconfmgr/files/etc/cifs-credentials-nas",
 ])
 def test_forbidden_path_rejected(repo, rel):
     stage(repo, rel, "harmless\n")
@@ -59,7 +73,8 @@ def test_forbidden_path_rejected(repo, rel):
     assert rel in result.stderr
 
 
-@pytest.mark.parametrize("content", [PRIVATE_KEY, OVPN_TAG, SHADOW_LINE, PSK_LINE])
+@pytest.mark.parametrize("content", [PRIVATE_KEY, OVPN_TAG, SHADOW_LINE, PSK_LINE,
+                                     PASSWORD_LINE, OVPN_STATIC, TLS_AUTH])
 def test_secret_content_rejected(repo, content):
     stage(repo, "aconfmgr/files/etc/something.conf", content)
     result = run_hook(repo)
@@ -86,3 +101,12 @@ def test_secret_before_large_tail_rejected(repo):
     result = run_hook(repo)
     assert result.returncode == 1
     assert "aconfmgr/files/etc/big.conf" in result.stderr
+
+
+def test_unreadable_file_fails_closed(repo):
+    stage(repo, "notes.txt", "hello\n")
+    git(repo, "commit", "-q", "-m", "x")
+    (repo / "notes.txt").unlink()
+    result = run_hook(repo, "--all")
+    assert result.returncode == 1
+    assert "cannot read" in result.stderr
