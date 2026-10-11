@@ -1,0 +1,3 @@
+# Default alert sound for all users (a user's own choice still wins).
+[org/gnome/desktop/sound]
+theme-name='bark'

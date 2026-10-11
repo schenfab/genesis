@@ -139,3 +139,11 @@ CopyFile /etc/udev/rules.d/40-libsane.rules 755
 CopyFile /etc/udev/rules.d/89-uinput-u.rules
 CopyFile /etc/udev/rules.d/S99-2000S1.rules 755
 CopyFile /usr/share/sounds/gnome/default/alerts/bark.ogg
+
+# Alert sound: a "bark" sound theme, made the default via a dconf system database
+# (genesis apply runs `dconf update` to compile it).
+CopyFile /usr/share/sounds/bark/index.theme
+CreateLink /usr/share/sounds/bark/bell-terminal.ogg ../gnome/default/alerts/bark.ogg
+CreateLink /usr/share/sounds/bark/bell-window-system.ogg ../gnome/default/alerts/bark.ogg
+CopyFile /etc/dconf/profile/user
+CopyFile /etc/dconf/db/local.d/10-sound

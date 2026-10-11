@@ -65,6 +65,13 @@ file, delete `99-unsorted.sh`, review `git diff`, commit.
 Run `genesis apply` and `genesis save` in your own terminal: aconfmgr calls
 `sudo` itself and needs to ask for your password.
 
+## GNOME alert sound
+
+`genesis apply` installs a `bark` sound theme (`/usr/share/sounds/bark/`) and makes it
+the system default via dconf (`/etc/dconf/db/local.d/10-sound`, compiled by
+`dconf update`). A user's own choice in GNOME Settings still wins; to follow the
+default again, run once: `gsettings reset org.gnome.desktop.sound theme-name`.
+
 ## Hosts
 
 A host is `hosts/<host>/archinstall.json` (stage 1 overrides, may be `{}`) plus

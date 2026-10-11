@@ -13,7 +13,6 @@ AddPackage --foreign g15daemon-systemd # g15daemon init script for systemd
 # Files, links and services
 CopyFile /etc/dconf/db/local.d/00-hidpi
 CopyFile /etc/dconf/db/locks/hidpi
-CopyFile /etc/dconf/profile/user
 CopyFile /etc/default/grub
 CopyFile /etc/g15daemon.conf
 CopyFile /etc/hosts

@@ -10,8 +10,13 @@ def make_env(tmp_path, **extra):
     fake = tmp_path / "fake-aconfmgr"
     fake.mkdir()
     write_exe(fake / "aconfmgr", 'echo "cwd=$PWD args=$*" >> "$GENESIS_TEST_LOG"\n')
-    env = dict(os.environ, GENESIS_ACONFMGR_DIR=str(fake),
-               GENESIS_TEST_LOG=str(tmp_path / "log"), **extra)
+    # Stand-ins so apply never runs the real sudo/dconf.
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    write_exe(bin_dir / "sudo", 'echo "sudo $*" >> "$GENESIS_TEST_LOG"\n')
+    write_exe(bin_dir / "dconf", 'exit 0\n')
+    env = dict(os.environ, GENESIS_ACONFMGR_DIR=str(fake), GENESIS_TEST_LOG=str(tmp_path / "log"),
+               PATH=f"{bin_dir}:{os.environ['PATH']}", **extra)
     return env, fake
 
 
@@ -58,7 +63,7 @@ def test_apply_runs_aconfmgr_then_users_step(tmp_path):
     env, fake = make_env(tmp_path, GENESIS_USERS_FILE=str(users), GENESIS_CONFIG_DIR=str(cfg))
     result = run(["apply"], env)
     assert result.returncode == 0, result.stderr
-    assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {cfg} apply\n"
+    assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {cfg} apply\nsudo dconf update\n"
     assert "genesis-no-such-user" in result.stderr  # users step ran and skipped unknown user
 
 
@@ -70,6 +75,16 @@ def test_apply_accepts_package_in_host_file(tmp_path):
     users.write_text("")
     env, _ = make_env(tmp_path, GENESIS_USERS_FILE=str(users), GENESIS_CONFIG_DIR=str(cfg))
     assert run(["apply"], env).returncode == 0
+
+
+def test_apply_skips_dconf_update_without_dconf(tmp_path):
+    cfg = make_config(tmp_path, "AddPackage base\n")
+    users = tmp_path / "users"
+    users.write_text("")
+    env, fake = make_env(tmp_path, GENESIS_USERS_FILE=str(users), GENESIS_CONFIG_DIR=str(cfg))
+    env["GENESIS_DCONF"] = "genesis-no-such-dconf"  # host without dconf (no GNOME)
+    assert run(["apply"], env).returncode == 0
+    assert (tmp_path / "log").read_text() == f"cwd={fake} args=-c {cfg} apply\n"
 
 
 def test_apply_refuses_empty_config(tmp_path):

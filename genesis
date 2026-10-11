@@ -7,6 +7,7 @@ ACONFMGR_DIR="${GENESIS_ACONFMGR_DIR:-$GENESIS_ROOT/vendor/aconfmgr}"
 CONFIG_DIR="${GENESIS_CONFIG_DIR:-$GENESIS_ROOT/aconfmgr}"
 USERS_FILE="${GENESIS_USERS_FILE:-$GENESIS_ROOT/hosts/common/users}"
 ISO_MARKER="${GENESIS_ISO_MARKER:-/run/archiso}"
+DCONF="${GENESIS_DCONF:-dconf}"
 
 usage() {
 	cat >&2 <<'EOF'
@@ -55,6 +56,10 @@ case "$command" in
 		enable_secret_guard
 		require_packages_configured
 		run_aconfmgr apply "$@"
+		# aconfmgr copies dconf keyfiles but GNOME reads the compiled databases.
+		if command -v "$DCONF" >/dev/null; then
+			sudo "$DCONF" update
+		fi
 		"$GENESIS_ROOT/install/users.sh" "$USERS_FILE"
 		;;
 	save)
