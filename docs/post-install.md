@@ -10,3 +10,6 @@ These are deliberately kept out of the public repo. aconfmgr ignores their paths
 - [ ] Printer: add via CUPS web UI (http://localhost:631) or GNOME Settings; HP needs `hp-setup` (hplip)
 - [ ] Wi-Fi / VPN connections in NetworkManager (re-enter in GNOME Settings)
 - [ ] Dropbox: `systemctl enable --now dropbox@<user>` after first login (if installed on this host)
+- [ ] Windows 10 fonts (proprietary, not redistributable) → copy into `/usr/share/fonts/Win10Fonts/`, then `fc-cache -f`
+- [ ] HP scanner drivers (hp2000S1 / hpgt2500, proprietary SANE backends) → install into `/usr/lib/sane/` from the vendor package (moog only)
+- [ ] CUPS TLS key/cert (`/etc/cups/ssl/`) are regenerated automatically by cupsd; nothing to restore

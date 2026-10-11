@@ -12,6 +12,7 @@ forbidden_paths=(
 	'*/etc/credstore*' '*/etc/cryptsetup-keys.d/*'
 	'*/etc/ppp/*secrets' '*/etc/davfs2/secrets' '*/etc/msmtprc'
 	'*/etc/samba/credentials*' '*/etc/cifs-credentials*'
+	'*/etc/cups/ssl/*' '*/etc/brlapi.key' '*/usr/share/fonts/Win10Fonts/*'
 )
 # Written so that this file does not match itself.
 # shellcheck disable=SC2016  # literal $ in regex
