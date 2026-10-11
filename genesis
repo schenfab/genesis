@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# genesis: bootstrap and sync Arch Linux machines. See README.md.
+set -euo pipefail
+
+GENESIS_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+ACONFMGR_DIR="${GENESIS_ACONFMGR_DIR:-$GENESIS_ROOT/vendor/aconfmgr}"
+CONFIG_DIR="$GENESIS_ROOT/aconfmgr"
+USERS_FILE="${GENESIS_USERS_FILE:-$GENESIS_ROOT/hosts/common/users}"
+ISO_MARKER="${GENESIS_ISO_MARKER:-/run/archiso}"
+
+usage() {
+	cat >&2 <<'EOF'
+Usage: genesis <command>
+  install [host]  (live ISO only) install this machine with archinstall
+  apply           make this machine match the repo (asks before every change)
+  save            record this machine's drift into aconfmgr/99-unsorted.sh
+  check           lint the aconfmgr config
+EOF
+	exit 2
+}
+
+die() { echo "genesis: $*" >&2; exit 1; }
+
+run_aconfmgr() {
+	if [[ ! -x "$ACONFMGR_DIR/aconfmgr" ]]; then
+		git -C "$GENESIS_ROOT" submodule update --init vendor/aconfmgr
+	fi
+	# aconfmgr only works from inside its own checkout.
+	(cd "$ACONFMGR_DIR" && ./aconfmgr -c "$CONFIG_DIR" "$@")
+}
+
+enable_secret_guard() {
+	if git -C "$GENESIS_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+		git -C "$GENESIS_ROOT" config core.hooksPath hooks
+	fi
+}
+
+[[ $# -ge 1 ]] || usage
+command="$1"
+shift
+
+case "$command" in
+	install)
+		[[ -d "$ISO_MARKER" ]] || die "install must run from the Arch live ISO"
+		exec "$GENESIS_ROOT/install/bootstrap.sh" "$@"
+		;;
+	apply)
+		enable_secret_guard
+		run_aconfmgr apply "$@"
+		"$GENESIS_ROOT/install/users.sh" "$USERS_FILE"
+		;;
+	save)
+		enable_secret_guard
+		run_aconfmgr save "$@"
+		if [[ -s "$CONFIG_DIR/99-unsorted.sh" ]]; then
+			echo "genesis: new drift in aconfmgr/99-unsorted.sh; sort it into the common or host files, then commit." >&2
+		fi
+		;;
+	check)
+		enable_secret_guard
+		run_aconfmgr check "$@"
+		;;
+	*)
+		usage
+		;;
+esac

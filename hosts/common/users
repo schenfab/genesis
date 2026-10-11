@@ -1,0 +1,5 @@
+# <user> <supplementary groups...>
+# Users in `wheel` are admins (sudo). Passwords are prompted at install, never stored here.
+fschenkel wheel docker scanner uucp uinputg
+guest
+andrea

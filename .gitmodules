@@ -1,0 +1,4 @@
+[submodule "vendor/aconfmgr"]
+	path = vendor/aconfmgr
+	url = https://github.com/CyberShadow/aconfmgr
+	ignore = dirty
