@@ -34,3 +34,4 @@ CopyFile /etc/modprobe.d/amdgpu.conf
 RemoveFile /etc/systemd/system/multi-user.target.wants/NetworkManager.service
 RemoveFile /etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service
 RemoveFile /etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service
+RemoveFile /etc/systemd/system/network-online.target.wants
