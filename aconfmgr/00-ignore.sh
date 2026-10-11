@@ -42,6 +42,7 @@ IgnorePath '/usr/lib/ghc-*' '/usr/share/.mono/*' '/usr/share/hplip/*/__pycache__
 IgnorePath '/usr/share/texmf-dist/ls-R' '/etc/texmf/ls-R' '/etc/xml/catalog' '/usr/lib/graphviz/config*'
 IgnorePath '/usr/share/perl5/vendor_perl/XML/SAX/ParserDetails.ini'
 IgnorePath '/etc/dconf/db/gdm' '/etc/dconf/db/ibus' '/etc/dconf/db/local'
+IgnorePath '/etc/fonts/conf.d/*' '/usr/lib/jvm/default*' '/etc/texmf/web2c/updmap.cfg' '/etc/mkinitcpio.d/*.preset'
 # KeePass plugin build artefacts (KPUInputN) generated at runtime.
 IgnorePath '/usr/share/keepass/*' '/usr/lib/KPUInputN.so'
 

@@ -38,7 +38,7 @@ for f in "${files[@]}"; do
 		fi
 	done
 	# No -q: grep must consume all input, or the writer gets SIGPIPE and pipefail hides the match.
-	if ! out=$(content "$f"); then
+	if ! out=$(content "$f" | tr -d '\000'); then
 		echo "secret guard: cannot read $f" >&2
 		failed=1
 		continue
