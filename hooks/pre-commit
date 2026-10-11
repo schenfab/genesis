@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Secret guard (this repo is public). Rejects private paths and secret-looking content.
+#   hooks/pre-commit         check staged files (installed via core.hooksPath=hooks)
+#   hooks/pre-commit --all   check every tracked file (CI)
+set -euo pipefail
+
+forbidden_paths=(
+	'*/etc/shadow*' '*/etc/gshadow*' '*/etc/ssh/ssh_host_*'
+	'*/etc/docker/key.json' '*/etc/docker/certs.d/*'
+	'*/etc/openvpn/client/*' '*/etc/NetworkManager/system-connections/*'
+	'*/etc/ca-certificates/trust-source/*' '*/etc/cups/ppd/*'
+	'*/etc/credstore*' '*/etc/cryptsetup-keys.d/*'
+)
+# Written so that this file does not match itself.
+secret_regex='-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----|BEGIN OpenVPN Static[ ]key|<(key|tls-auth|tls-crypt|secret)>|\$(y|gy|7|6|5|2[aby])\$[./A-Za-z0-9$]{16,}|^[[:space:]]*psk[[:space:]]*='
+
+if [[ "${1:-}" == --all ]]; then
+	# Skip gitlinks (submodules, mode 160000).
+	mapfile -t files < <(git ls-files -s | awk -F'\t' '{ split($1, m, " "); if (m[1] != "160000") print $2 }')
+	content() { cat -- "$1"; }
+else
+	mapfile -t files < <(git diff --cached --name-only --diff-filter=ACMR --ignore-submodules=all)
+	content() { git show ":$1"; }
+fi
+
+failed=0
+for f in "${files[@]}"; do
+	for pat in "${forbidden_paths[@]}"; do
+		# shellcheck disable=SC2053  # glob match is intended
+		if [[ "/$f" == $pat ]]; then
+			echo "secret guard: forbidden path: $f" >&2
+			failed=1
+			continue 2
+		fi
+	done
+	if content "$f" | grep -qaE -- "$secret_regex"; then
+		echo "secret guard: secret-looking content in: $f" >&2
+		failed=1
+	fi
+done
+exit "$failed"
