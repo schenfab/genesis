@@ -1,0 +1,17 @@
+{
+  "locale_config": {"kb_layout": "de_CH-latin1", "sys_lang": "en_US.UTF-8", "sys_enc": "UTF-8"},
+  "timezone": "Europe/Zurich",
+  "kernels": ["linux"],
+  "ntp": true,
+  "profile_config": {
+    "profile": {"main": "Desktop", "details": ["GNOME"]},
+    "greeter": "gdm",
+    "gfx_driver": "All open-source"
+  },
+  "app_config": {"audio_config": {"audio": "pipewire"}},
+  "network_config": {"type": "nm"},
+  "packages": ["git"],
+  "custom_commands": [
+    "sed -i 's/^#de_CH.UTF-8 UTF-8/de_CH.UTF-8 UTF-8/' /etc/locale.gen && locale-gen"
+  ]
+}
