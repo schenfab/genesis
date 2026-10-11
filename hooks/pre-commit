@@ -33,7 +33,8 @@ for f in "${files[@]}"; do
 			continue 2
 		fi
 	done
-	if content "$f" | grep -qaE -- "$secret_regex"; then
+	# No -q: grep must consume all input, or the writer gets SIGPIPE and pipefail hides the match.
+	if content "$f" | grep -aE -- "$secret_regex" >/dev/null; then
 		echo "secret guard: secret-looking content in: $f" >&2
 		failed=1
 	fi

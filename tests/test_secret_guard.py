@@ -77,3 +77,12 @@ def test_all_mode_checks_committed_files(repo):
 def test_this_repo_is_clean():
     result = run_hook(REPO, "--all")
     assert result.returncode == 0, result.stderr
+
+
+def test_secret_before_large_tail_rejected(repo):
+    # A match near the top of a file larger than the pipe buffer must not be
+    # masked by grep -q exiting early and the writer dying of SIGPIPE.
+    stage(repo, "aconfmgr/files/etc/big.conf", PRIVATE_KEY + "x" * (1024 * 1024) + "\n")
+    result = run_hook(repo)
+    assert result.returncode == 1
+    assert "aconfmgr/files/etc/big.conf" in result.stderr
